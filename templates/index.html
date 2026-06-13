@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Password Strength Analyzer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+  <!-- Background blobs -->
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+
+  <div class="container">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <i class="fas fa-shield-halved"></i>
+        <span>PassGuard</span>
+      </div>
+      <<p class="tagline">Your smart password security companion · Stay safe, stay strong</p>
+    </header>
+
+    <!-- Main Card -->
+    <div class="main-card">
+      <h1>Password Strength <span class="gradient-text">Analyzer</span></h1>
+      <p class="subtitle">Check how secure your password really is</p>
+
+      <!-- Input Section -->
+      <div class="input-section">
+        <div class="input-wrapper">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="passwordInput" placeholder="Enter your password here..." autocomplete="off"/>
+          <button class="toggle-btn" id="toggleBtn" onclick="toggleVisibility()">
+            <i class="fas fa-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+        <button class="analyze-btn" onclick="analyzePassword()">
+          <i class="fas fa-magnifying-glass"></i> Analyze Password
+        </button>
+      </div>
+
+      <!-- Strength Meter (hidden until analyzed) -->
+      <div class="meter-section" id="meterSection" style="display:none">
+        <div class="strength-header">
+          <span class="strength-label-text">Strength:</span>
+          <span class="strength-badge" id="strengthBadge">-</span>
+        </div>
+        <div class="meter-bar">
+          <div class="meter-fill" id="meterFill"></div>
+        </div>
+        <div class="score-text" id="scoreText"></div>
+      </div>
+
+      <!-- Details Grid (hidden until analyzed) -->
+      <div class="details-grid" id="detailsGrid" style="display:none">
+        <div class="detail-item" id="d-length">
+          <i class="fas fa-ruler-horizontal"></i>
+          <span class="detail-label">Length</span>
+          <span class="detail-val" id="d-length-val">-</span>
+          <i class="detail-check fas fa-circle-check" id="d-length-icon"></i>
+        </div>
+        <div class="detail-item" id="d-upper">
+          <i class="fas fa-font"></i>
+          <span class="detail-label">Uppercase</span>
+          <span class="detail-val" id="d-upper-val">-</span>
+          <i class="detail-check fas fa-circle-check" id="d-upper-icon"></i>
+        </div>
+        <div class="detail-item" id="d-lower">
+          <i class="fas fa-font fa-sm"></i>
+          <span class="detail-label">Lowercase</span>
+          <span class="detail-val" id="d-lower-val">-</span>
+          <i class="detail-check fas fa-circle-check" id="d-lower-icon"></i>
+        </div>
+        <div class="detail-item" id="d-number">
+          <i class="fas fa-hashtag"></i>
+          <span class="detail-label">Numbers</span>
+          <span class="detail-val" id="d-number-val">-</span>
+          <i class="detail-check fas fa-circle-check" id="d-number-icon"></i>
+        </div>
+        <div class="detail-item" id="d-symbol">
+          <i class="fas fa-star-of-david"></i>
+          <span class="detail-label">Symbols</span>
+          <span class="detail-val" id="d-symbol-val">-</span>
+          <i class="detail-check fas fa-circle-check" id="d-symbol-icon"></i>
+        </div>
+        <div class="detail-item" id="d-score">
+          <i class="fas fa-trophy"></i>
+          <span class="detail-label">Score</span>
+          <span class="detail-val" id="d-score-val">-</span>
+          <i class="detail-check fas fa-circle-check" id="d-score-icon"></i>
+        </div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="feedback-section" id="feedbackSection" style="display:none">
+        <h3><i class="fas fa-lightbulb"></i> Suggestions</h3>
+        <ul id="feedbackList"></ul>
+      </div>
+
+      <!-- Suggested Password -->
+      <div class="suggestion-box" id="suggestionBox" style="display:none">
+        <div class="suggestion-label"><i class="fas fa-wand-magic-sparkles"></i> Suggested Strong Password</div>
+        <div class="suggestion-row">
+          <code id="suggestedPwd"></code>
+          <button class="copy-btn" onclick="copySuggested()"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+      </div>
+
+      <!-- Generate Button -->
+      <button class="generate-btn" onclick="generatePassword()">
+        <i class="fas fa-dice"></i> Generate Strong Password
+      </button>
+
+    </div>
+
+    <!-- History Section -->
+    <div class="history-card">
+      <div class="history-header">
+        <h2><i class="fas fa-clock-rotate-left"></i> Check History</h2>
+        <button class="clear-btn" onclick="clearHistory()"><i class="fas fa-trash"></i> Clear</button>
+      </div>
+      <div id="historyList" class="history-list">
+        <p class="empty-msg">No history yet. Analyze a password to begin.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>PassGuard © 2026 · <strong>Your passwords deserve better protection</strong></p>
+  </footer>
+
+<script>
+  // ── Toggle password visibility ──
+  function toggleVisibility() {
+    const input = document.getElementById('passwordInput');
+    const icon = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'fas fa-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'fas fa-eye';
+    }
+  }
+
+  // ── Analyze password ──
+  async function analyzePassword() {
+    const password = document.getElementById('passwordInput').value;
+    if (!password) { alert('Please enter a password first!'); return; }
+
+    const res = await fetch('/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+    displayResults(data);
+    loadHistory();
+  }
+
+  // ── Display results ──
+  function displayResults(data) {
+    // Meter
+    document.getElementById('meterSection').style.display = 'block';
+    const badge = document.getElementById('strengthBadge');
+    badge.textContent = data.strength.label;
+    badge.style.background = data.strength.color;
+    document.getElementById('meterFill').style.width = data.strength.percent + '%';
+    document.getElementById('meterFill').style.background = data.strength.color;
+    document.getElementById('scoreText').textContent = `Score: ${data.score} / ${data.max_score}`;
+
+    // Details grid
+    document.getElementById('detailsGrid').style.display = 'grid';
+    setDetail('d-length', data.details.length + ' chars', data.details.length_ok);
+    setDetail('d-upper', data.details.has_upper ? 'Yes' : 'No', data.details.has_upper);
+    setDetail('d-lower', data.details.has_lower ? 'Yes' : 'No', data.details.has_lower);
+    setDetail('d-number', data.details.has_number ? 'Yes' : 'No', data.details.has_number);
+    setDetail('d-symbol', data.details.has_symbol ? 'Yes' : 'No', data.details.has_symbol);
+    setDetail('d-score', data.score + '/7', data.score >= 5);
+
+    // Feedback
+    const fb = document.getElementById('feedbackSection');
+    const fbList = document.getElementById('feedbackList');
+    if (data.feedback.length > 0) {
+      fb.style.display = 'block';
+      fbList.innerHTML = data.feedback.map(f => `<li><i class="fas fa-triangle-exclamation"></i> ${f}</li>`).join('');
+    } else {
+      fb.innerHTML = '<p class="all-good"><i class="fas fa-circle-check"></i> All checks passed! Your password is excellent.</p>';
+      fb.style.display = 'block';
+    }
+
+    // Suggestion box
+    if (data.score < 5) {
+      fetchSuggestion();
+    } else {
+      document.getElementById('suggestionBox').style.display = 'none';
+    }
+  }
+
+  function setDetail(id, value, isGood) {
+    document.getElementById(id + '-val').textContent = value;
+    const icon = document.getElementById(id + '-icon');
+    icon.className = isGood
+      ? 'detail-check fas fa-circle-check good'
+      : 'detail-check fas fa-circle-xmark bad';
+  }
+
+  // ── Fetch a suggested password ──
+  async function fetchSuggestion() {
+    const res = await fetch('/generate');
+    const data = await res.json();
+    document.getElementById('suggestionBox').style.display = 'block';
+    document.getElementById('suggestedPwd').textContent = data.password;
+  }
+
+  // ── Generate a strong password ──
+  async function generatePassword() {
+    const res = await fetch('/generate');
+    const data = await res.json();
+    document.getElementById('passwordInput').value = data.password;
+    document.getElementById('passwordInput').type = 'text';
+    document.getElementById('eyeIcon').className = 'fas fa-eye-slash';
+    analyzePassword();
+  }
+
+  // ── Copy suggested password ──
+  function copySuggested() {
+    const pwd = document.getElementById('suggestedPwd').textContent;
+    navigator.clipboard.writeText(pwd);
+    const btn = document.querySelector('.copy-btn');
+    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i> Copy', 2000);
+  }
+
+  // ── Load history ──
+  async function loadHistory() {
+    const res = await fetch('/history');
+    const history = await res.json();
+    const list = document.getElementById('historyList');
+
+    if (history.length === 0) {
+      list.innerHTML = '<p class="empty-msg">No history yet. Analyze a password to begin.</p>';
+      return;
+    }
+
+    list.innerHTML = history.map((h, i) => `
+      <div class="history-item">
+        <div class="history-num">#${i + 1}</div>
+        <div class="history-info">
+          <span class="history-masked">${h.masked}</span>
+          <span class="history-meta">${h.length} chars · ${h.timestamp}</span>
+        </div>
+        <span class="history-badge" style="background:${h.color}">${h.strength}</span>
+      </div>
+    `).join('');
+  }
+
+  // ── Clear history ──
+  async function clearHistory() {
+    await fetch('/clear-history', { method: 'POST' });
+    loadHistory();
+  }
+
+  // ── Analyze on Enter key ──
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('passwordInput').addEventListener('keypress', e => {
+      if (e.key === 'Enter') analyzePassword();
+    });
+    loadHistory();
+  });
+</script>
+</body>
+</html>
